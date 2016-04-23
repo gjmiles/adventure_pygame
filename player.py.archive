@@ -1,0 +1,181 @@
+import glob
+import pygame
+import math
+import random
+from pygame.locals import *
+
+#Derive your class from the Sprite super class
+class Player(pygame.sprite.Sprite):
+    
+    change_x = 0
+    change_y = 0
+    
+    def __init__(self, x, y):
+        # Don't forget to call the super constructor
+        super().__init__();
+
+        image_files = glob.glob('HumanMage.PNG')
+        mob_choice = image_files[random.randint(0,len(image_files)-1)]
+        self.image = pygame.image.load(mob_choice).convert()
+        #This image is typically way too big
+        #self.image = pygame.transform.scale(self.image, (self.image.get_width()//2,self.image.get_height()//2))
+        
+        arrayTest = []
+        pixArray = pygame.PixelArray(self.image)
+        for index,row in enumerate(pixArray):
+            for item in row:
+                if item != self.image.map_rgb((255,0,255)):
+                    arrayTest.append(index)
+        
+        arrayTest = list(set(arrayTest))
+        pixArray = pixArray[arrayTest[0]:arrayTest[-1],arrayTest[0]:arrayTest[-1]]
+
+        self.image = pixArray.make_surface()
+        self.image.set_colorkey(pygame.Color(255, 0, 255))
+        self.mask = pygame.mask.from_surface(self.image)
+        self.mask_r = self.mask
+        self.image_r = self.image
+        self.image = pygame.transform.flip(self.image,True,False)
+        self.image_l = self.image
+        self.mask = pygame.mask.from_surface(self.image)
+        self.mask_l = self.mask
+        
+        self.rect = self.image.get_rect()
+        self.rect.y = y
+        self.rect.x = x
+
+        self.direction = "R"
+        self.directions = {'R':self.image_r,'L':self.image_l}
+        self.mask_dict = {'R':self.mask_r,'L':self.mask_l}
+
+        self.view_port = 100
+        self.pathing = False
+        self.path_start = False
+        self.a_path = []
+        self.new_pos = (0,0)
+        self.to_square = (0,0)
+        
+    # def draw(self, SCREEN):
+    #     SCREEN.blit(self.image, (self.rect.x, self.rect.y))
+    def changespeed(self,x,y):
+        # print(x,y)
+        # print(self.change_x,self.change_y)
+        if(x > 0):
+            self.direction = "R"
+        elif(x < 0):
+            self.direction = "L"
+            
+        if(math.fabs(self.change_x + x) <= 2):
+            self.change_x += x
+
+        if(math.fabs(self.change_y + y) <= 2):
+            self.change_y += y
+            
+
+    def stop(self):
+        self.change_x = 0
+        self.change_y = 0
+            
+    def move(self, walls):
+        """ Find a new position for the player """
+ 
+        # Move left/right
+        self.rect.x += self.change_x
+ 
+        # Did this update cause us to hit a wall?
+        block_hit_list = pygame.sprite.spritecollide(self, walls, False,collided = pygame.sprite.collide_mask)
+        #for block in block_hit_list:
+            # If we are moving right, set our right side to the left side of
+            # the item we hit
+        if block_hit_list:
+            self.rect.x -= self.change_x
+            # if self.change_x > 0:
+            #     #self.stop()                
+            #     self.rect.right = block.rect.left + self.change_x
+            #     #print("Colliding")
+            #     #self.rect.x -= self.change_x
+            # else:
+            #     # Otherwise if we are moving left, do the opposite.
+            #     #print("Colliding")
+            #     #self.change_x = self.change_x + self.change_x
+            #     #self.stop()
+            #     #self.rect.x -= self.change_x
+            #     self.rect.left = block.rect.right + self.change_x
+
+        # Move up/down
+        self.rect.y += self.change_y
+ 
+        # Check and see if we hit anything
+        block_hit_list = pygame.sprite.spritecollide(self, walls, False, collided = pygame.sprite.collide_mask)
+        #for block in block_hit_list:
+ 
+            # Reset our position based on the top/bottom of the object.
+        if block_hit_list:
+            self.rect.y -= self.change_y
+            # if self.change_y > 0:
+            #     #self.rect.y -= self.change_y
+            #     #self.stop()
+            #     #self.change_y = self.change_y - self.change_y
+            #     #self.rect.bottom = block.rect.top
+            # else:
+            #     #self.rect.y += self.change_y
+            #     #self.stop()
+            #     #self.change_y = self.change_y + self.change_y
+            #     self.rect.top = block.rect.bottom - self.change_y
+        return (self.rect.x,self.rect.y)
+
+    def follow_path(self,path,map_pix,to_pos):
+        self.pathing = True
+        self.path_start = True
+        self.a_path = path
+        self.new_pos = to_pos
+
+    def is_moving(self,map_pix):
+        if self.pathing:
+            if self.path_start:
+                self.to_square = self.a_path.pop()
+                self.path_start = False
+            path_check = [int(math.fabs(x - y)) for x,y in zip(self.get_pos(),self.to_square)]
+            #print("Path Check", path_check)
+            if(self.to_square[0] == self.rect.x):
+                self.changespeed(0,0)
+            elif(self.to_square[0] < self.rect.x):
+                self.changespeed(-2,0)
+            elif(self.to_square[0] > self.rect.x):
+                self.changespeed(2,0)
+
+            if(self.to_square[1] == self.rect.y):
+                self.changespeed(0,0)
+            elif(self.to_square[1] > self.rect.y):
+                self.changespeed(0,2)
+            elif(self.to_square[1] < self.rect.y):
+                self.changespeed(0,-2)
+                
+            if path_check[0] <= 2 and path_check[1] <= 2:
+                self.to_square = self.a_path.pop()
+            #print(self.to_square)
+            goal_check = [int(math.fabs(x - y)) for x,y in zip(self.get_pos(),self.new_pos)]
+            #print("Current Pos",self.get_pos())
+            #print("Goal Check",goal_check)
+            if goal_check[0] < 20 and goal_check[1] < 20:
+                self.stop()
+                self.pathing = False
+                #if goal_check[0] < 30 and goal_check[1] < 30:
+                    #self.stop()
+                    #self.pathing = False
+            #    self.counts = 0
+            
+    def group_add(self,group):
+        group.add(self)
+        
+    def update_image(self):
+        self.image = self.directions[self.direction]
+        self.mask = self.mask_dict[self.direction]
+
+    def update(self, add_x, add_y):
+        self.rect.x -= add_x
+        print(add_y)
+        self.rect.y -= add_y
+
+    def get_pos(self):
+        return (self.rect.x,self.rect.y)
