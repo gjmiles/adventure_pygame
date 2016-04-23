@@ -25,11 +25,11 @@ Hack because it is a Hack and Slash.
 To start the game start "client.py", requires python 3.5
 
 ##Direction controls are:
- y  k  u           
-  \ | /               
+  y  k  u           
+   \ | /               
   h- . -l             
-  / | \               
- b  j  n
+   / | \               
+  b  j  n
 
 Space Bar attacks, to attack in a specific direction first press the
 key for that direction, then attack.
