@@ -27,7 +27,7 @@ To start the game start "client.py", requires python 3.5
 ##Direction controls are:
  y  k  u           
   \ | /               
- h- . -l             
+  h- . -l             
   / | \               
  b  j  n
 
