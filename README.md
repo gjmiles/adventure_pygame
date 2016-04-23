@@ -1,4 +1,4 @@
-Author: Gregory Miles
+#Author: Gregory Miles
 Purpose: CS332L CSULA
 
 This game was made using the pygame library.  All code was written by
@@ -24,12 +24,12 @@ Hack because it is a Hack and Slash.
 
 To start the game start "client.py", requires python 3.5
 
-Direction controls are:
-y  k  u           
- \ | /               
-h- . -l             
- / | \               
-b  j  n
+##Direction controls are:
+ y  k  u           
+  \ | /               
+ h- . -l             
+  / | \               
+ b  j  n
 
 Space Bar attacks, to attack in a specific direction first press the
 key for that direction, then attack.
